@@ -45,7 +45,16 @@ def executar_sistema():
                 input("\nPerfil não encontrado!")
 
         elif opcao == "2":
-            criar_usuario_menu(dados)
+            from controllers.usuario_controller import UsuarioController
+            from data.data_manager import conectar
+            
+            db = conectar()
+            try:
+                controller = UsuarioController(db)
+                sucesso, mensagem = controller.criar_usuario_terminal(criar_usuario_menu, dados)
+                input(f"\n{mensagem}")
+            finally:
+                db.close()
 
         elif opcao == "3":
             print("\nAté logo! Bons estudos!")

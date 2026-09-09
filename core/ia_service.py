@@ -3,8 +3,10 @@
 # pylint: disable=line-too-long
 # pylint: disable=astroid-error
 import os
+import time
 from google import genai
 from google.genai import types
+from google.genai.errors import ServerError
 # Inicializa o cliente se a chave de API estiver presente
 API_KEY = os.environ.get("GEMINI_API_KEY")
 client = genai.Client() if API_KEY else None
@@ -62,25 +64,38 @@ def gerar_passos_tarefa(titulo_tarefa: str) -> list:
         "Você é um especialista em produtividade para neurodivergentes. "
         "Crie checklists limpos, com verbos de ação claros e livres de poluição textual."
     )
-    try:
-        response = client.models.generate_content(
-            model=MODELO_GEMINI,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                system_instruction=system_instruction,
-                temperature=0.2,
-            ),
-        )
+    
+    # ==========================================
+    # ONDE ESTAMOS MUDANDO: Bloco de repetição automática com ServerError
+    # ==========================================
+    tentativas = 3
+    for tentativa in range(tentativas):
+        try:
+            response = client.models.generate_content(
+                model=MODELO_GEMINI,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                    temperature=0.2,
+                ),
+            )
 
-        # Limpa e filtra linhas vazias
-        passos = [linha.strip() for linha in response.text.split("\n") if linha.strip()]
+            # Limpa e filtra linhas vazias
+            passos = [linha.strip() for linha in response.text.split("\n") if linha.strip()]
 
-        # Remove marcadores comuns caso o modelo acabe gerando por teimosia (ex: "-", "*", "1.")
-        passos_limpos = []
-        for p in passos:
-            p_limpo = p.lstrip("0123456789.-* ")
-            if p_limpo:
-                passos_limpos.append(p_limpo)
-        return passos_limpos
-    except (ConnectionError, TimeoutError) as e:
-        return [f"Não foi possível gerar os passos: {str(e)}"]
+            # Remove marcadores comuns caso o modelo acabe gerando por teimosia (ex: "-", "*", "1.")
+            passos_limpos = []
+            for p in passos:
+                p_limpo = p.lstrip("0123456789.-* ")
+                if p_limpo:
+                    passos_limpos.append(p_limpo)
+            return passos_limpos
+            
+        except ServerError:
+            if tentativa < tentativas - 1:
+                time.sleep(2) # Aguarda 2 segundos antes da próxima tentativa para mitigar o erro 503
+                continue
+            else:
+                return ["O serviço de IA está temporariamente sobrecarregado (Erro 503). Tente novamente em instantes."]
+        except (ConnectionError, TimeoutError) as e:
+            return [f"Não foi possível gerar os passos: {str(e)}"]
