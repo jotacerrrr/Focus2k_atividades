@@ -22,8 +22,9 @@ while True:
         print("1. Direto")
         print("2. Detalhado")
         escolha = input("Estilo: ").strip()
-        estilo = "detalhado" if escolha == "2" else "direto"
-        resposta = controller.criar_perfil(nome, estilo)
+        
+        # Passa a escolha ("1" ou "2") direto para o controller
+        resposta = controller.criar_perfil(nome, escolha)
         print(resposta["mensagem"])
 
     elif opcao == "3":

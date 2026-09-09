@@ -56,6 +56,10 @@ class TestUsuarioService(unittest.TestCase):
                 "Leo", "direto"
             )
 
+    def test_rejeita_nome_com_menos_de_3_caracteres(self):
+        with self.assertRaisesRegex(ValueError, "no mínimo 3 caracteres"):
+            self.service.criar_usuario("Al", "direto")
+
 
 if __name__ == "__main__":
     unittest.main() 

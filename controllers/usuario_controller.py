@@ -8,20 +8,12 @@ class UsuarioController:
         usuarios = self.service.listar_usuarios()
         return [u.nome for u in usuarios]
 
-from services.usuario_service import UsuarioService
-
-class UsuarioController:
-    def __init__(self, db):
-        self.service = UsuarioService(db)
-
-    def listar_perfis(self):
-        usuarios = self.service.listar_usuarios()
-        return [u.nome for u in usuarios]
-
     def criar_perfil(self, nome, escolha_estilo):
-        if escolha_estilo == "1":
+        escolha = str(escolha_estilo).strip()
+
+        if escolha == "1":
             estilo = "direto"
-        elif escolha_estilo == "2":
+        elif escolha == "2":
             estilo = "detalhado"
         else:
             return {"sucesso": False, "mensagem": "Estilo inválido! Escolha 1 para Direto ou 2 para Detalhado."}
